@@ -1,6 +1,5 @@
 # Set default behavior to automatically normalize line endings
 * text=auto
-
 # Treat Unity meta and shader files as text
 *.cs text
 *.shader text
@@ -11,9 +10,8 @@
 *.xml text
 *.asset text
 *.controller text
-
 # Binary files
-*.png binary
+*.png filter=lfs diff=lfs merge=lfs -text
 *.jpg binary
 *.fbx binary
 *.prefab binary
@@ -22,3 +20,4 @@
 *.wav binary
 *.ogg binary
 *.tga binary
+*.unity filter=lfs diff=lfs merge=lfs -text
