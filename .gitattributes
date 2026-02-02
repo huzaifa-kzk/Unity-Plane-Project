@@ -1,0 +1,24 @@
+# Set default behavior to automatically normalize line endings
+* text=auto
+
+# Treat Unity meta and shader files as text
+*.cs text
+*.shader text
+*.shadergraph text
+*.meta text
+*.txt text
+*.json text
+*.xml text
+*.asset text
+*.controller text
+
+# Binary files
+*.png binary
+*.jpg binary
+*.fbx binary
+*.prefab binary
+*.mat binary
+*.mp4 binary
+*.wav binary
+*.ogg binary
+*.tga binary

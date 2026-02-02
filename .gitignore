@@ -1,0 +1,48 @@
+# --------------------
+# Node.js / Expo / React Native
+# --------------------
+node_modules/
+npm-debug.log
+.expo/
+dist/
+build/
+*.expo.js
+*.expo.json
+*.expo-shared/
+
+# --------------------
+# Unity
+# --------------------
+Library/
+Temp/
+Obj/
+Build/
+Builds/
+Logs/
+UserSettings/
+
+# Large asset folders
+Assets/Airplane 3D model Voxel/
+Assets/FullOpaqueRain/
+Assets/Generic Aircraft Models/
+Assets/Materials/
+Assets/Radars/
+Assets/Scenes/
+Assets/TerrainTexturesPackFree/
+Assets/TextMesh Pro/
+Assets/TutorialInfo/
+
+# --------------------
+# Terraform
+# --------------------
+*.tfstate
+*.tfstate.backup
+.terraform/
+.terraform.lock.hcl
+*.pem  
+
+# --------------------
+# OS / IDE
+# --------------------
+.DS_Store
+.vscode/
