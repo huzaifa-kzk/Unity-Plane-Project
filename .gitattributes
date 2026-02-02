@@ -21,3 +21,5 @@
 *.ogg binary
 *.tga binary
 *.unity filter=lfs diff=lfs merge=lfs -text
+Assets/TerrainTexturesPackFree/TerrainTextures/*.png filter=lfs diff=lfs merge=lfs -text
+Assets/TerrainTexturesPackFree/DemoScene/*.unity filter=lfs diff=lfs merge=lfs -text
