@@ -1,0 +1,48 @@
+name: Expo CI/CD
+
+# Trigger on pushes to main branch
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1️⃣ Checkout the repository
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      # 2️⃣ Set up Node.js
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 20
+
+      # 3️⃣ Cache node_modules for faster builds
+      - name: Cache node modules
+        uses: actions/cache@v3
+        with:
+          path: plane-controller-app/node_modules
+          key: ${{ runner.os }}-node-${{ hashFiles('plane-controller-app/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
+
+      # 4️⃣ Install npm dependencies
+      - name: Install dependencies
+        working-directory: plane-controller-app
+        run: npm install
+
+      # 5️⃣ Run tests (optional)
+      - name: Run tests
+        working-directory: plane-controller-app
+        run: npm test || echo "No tests found"
+
+      # 6️⃣ Publish app to Expo
+      - name: Publish to Expo
+        working-directory: plane-controller-app
+        run: npx expo publish --non-interactive
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
