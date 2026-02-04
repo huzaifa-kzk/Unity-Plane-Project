@@ -1,13 +1,13 @@
 name: Expo CI/CD
 
-# Trigger on pushes to main branch
+# Trigger workflow on push to main
 on:
   push:
     branches:
       - main
 
 jobs:
-  publish:
+  update:
     runs-on: ubuntu-latest
 
     steps:
@@ -15,7 +15,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      # 2️⃣ Set up Node.js
+      # 2️⃣ Setup Node.js environment
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
@@ -35,14 +35,18 @@ jobs:
         working-directory: plane-controller-app
         run: npm install
 
-      # 5️⃣ Run tests (optional)
+      # 5️⃣ Install EAS CLI globally
+      - name: Install EAS CLI
+        run: npm install -g eas-cli
+
+      # 6️⃣ Run tests (optional)
       - name: Run tests
         working-directory: plane-controller-app
         run: npm test || echo "No tests found"
 
-      # 6️⃣ Publish app to Expo
-      - name: Publish to Expo
+      # 7️⃣ Publish update via EAS Update
+      - name: EAS Update
         working-directory: plane-controller-app
-        run: npx expo publish --non-interactive
+        run: eas update --branch main --message "CI/CD update from GitHub Actions"
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
