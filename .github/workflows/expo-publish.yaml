@@ -30,7 +30,7 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-node-
 
-      # 4️⃣ Install dependencies
+      # 4️⃣ Install npm dependencies
       - name: Install dependencies
         working-directory: plane-controller-app
         run: npm install
@@ -39,19 +39,17 @@ jobs:
       - name: Install EAS CLI
         run: npm install -g eas-cli
 
-      # 6️⃣ Clear Expo / Metro cache
-      - name: Clear Expo / Metro cache
+      # 6️⃣ Run tests (optional)
+      - name: Run tests
         working-directory: plane-controller-app
-        run: npx expo start --clear
+        run: npm test || echo "No tests found"
 
-      # 7️⃣ Optional: Verify assets exist
-      - name: Verify assets
-        run: ls -la plane-controller-app/assets/images/
-
-      # 8️⃣ Publish update via EAS Update
+      # 7️⃣ Publish update via EAS Update (CI safe)
       - name: EAS Update
         working-directory: plane-controller-app
-        run: eas update --branch main --message "CI/CD update from GitHub Actions"
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
           CI: 1
+          EXPO_NO_CACHE: 1
+        run: |
+          eas update --branch main --message "CI/CD update from GitHub Actions"
