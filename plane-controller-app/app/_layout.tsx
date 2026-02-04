@@ -1,4 +1,6 @@
 import { Stack } from 'expo-router';
+// app/_layout.tsx
+export const unstable_settings = { static: false };
 
 export default function RootLayout() {
   return (
