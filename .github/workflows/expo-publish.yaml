@@ -1,5 +1,6 @@
 name: Expo CI/CD
 
+# Trigger workflow on push to main
 on:
   push:
     branches:
@@ -10,14 +11,17 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      # 1️⃣ Checkout repository
       - name: Checkout repository
         uses: actions/checkout@v3
 
+      # 2️⃣ Setup Node.js
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
           node-version: 20
 
+      # 3️⃣ Cache node_modules for faster builds
       - name: Cache node modules
         uses: actions/cache@v3
         with:
@@ -26,18 +30,21 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-node-
 
+      # 4️⃣ Install npm dependencies
       - name: Install dependencies
         working-directory: plane-controller-app
         run: npm install
 
+      # 5️⃣ Install EAS CLI globally
       - name: Install EAS CLI
         run: npm install -g eas-cli
 
+      # 6️⃣ Run tests (optional)
       - name: Run tests
         working-directory: plane-controller-app
         run: npm test || echo "No tests found"
 
-      # 🔹 Export bundles before EAS Update
+      # 7️⃣ Export static bundles for all platforms
       - name: Export bundles
         working-directory: plane-controller-app
         env:
@@ -45,7 +52,7 @@ jobs:
           EXPO_NO_CACHE: 1
         run: npx expo export --output-dir dist --experimental-bundle
 
-      # 🔹 EAS Update
+      # 8️⃣ Publish update via EAS Update
       - name: EAS Update
         working-directory: plane-controller-app
         env:
