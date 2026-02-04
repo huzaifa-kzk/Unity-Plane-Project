@@ -5,7 +5,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Animated, Dimensions, ImageBackground, PanResponder, StyleSheet, Text, View } from 'react-native';
 
 // Assets imports
-import airplaneImg from '../assets/images/airplane.jpg';
+import airplaneImg from '../assets/images/airplane.png';
 import KTFRoadbrushFont from '../assets/fonts/KTF-Roadbrush.ttf';
 
 const { width, height } = Dimensions.get('window');
