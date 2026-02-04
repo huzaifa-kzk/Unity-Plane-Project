@@ -1,35 +1,19 @@
-import { Asset } from 'expo-asset';
 import { useFonts } from 'expo-font';
 import { LinearGradient } from 'expo-linear-gradient';
 import React, { useEffect, useRef, useState } from 'react';
-import { Animated, Dimensions, ImageBackground, PanResponder, StyleSheet, Text, View } from 'react-native';
+import { Animated, Dimensions, PanResponder, StyleSheet, Text, View } from 'react-native';
 
-// Assets imports
-import airplaneImg from '../assets/images/airplane.png';
+// Font import
 import KTFRoadbrushFont from '../assets/fonts/KTF-Roadbrush.ttf';
 
 const { width, height } = Dimensions.get('window');
-
-function usePreloadImages(images: number[]) {
-  const [loaded, setLoaded] = useState(false);
-  useEffect(() => {
-    async function load() {
-      await Promise.all(images.map((img: number) => Asset.fromModule(img).downloadAsync()));
-      setLoaded(true);
-    }
-    load();
-  }, []);
-  return loaded;
-}
 
 export default function ControllerScreen() {
   const [fontsLoaded] = useFonts({
     KTFRoadbrush: KTFRoadbrushFont,
   });
 
-  const imagesLoaded = usePreloadImages([airplaneImg]);
   const pan = useRef(new Animated.ValueXY()).current;
-
   const ws = useRef<WebSocket | null>(null);
 
   const connectWebSocket = () => {
@@ -67,31 +51,47 @@ export default function ControllerScreen() {
     })
   ).current;
 
-  if (!fontsLoaded || !imagesLoaded) {
+  if (!fontsLoaded) {
     return <View style={{ flex: 1, backgroundColor: '#1e3c72' }} />;
   }
 
   return (
-    <ImageBackground source={airplaneImg} style={styles.background} resizeMode="cover">
-      <LinearGradient colors={['#1e3c72aa', '#2a5298aa']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.container}>
-        <Text style={[styles.title, { fontFamily: 'KTFRoadbrush' }]}>UNITY PLANE CONTROLLER</Text>
+    <LinearGradient
+      colors={['#1e3c72', '#2a5298']}
+      start={{ x: 0, y: 0 }}
+      end={{ x: 1, y: 1 }}
+      style={styles.container}
+    >
+      <Text style={[styles.title, { fontFamily: 'KTFRoadbrush' }]}>
+        UNITY PLANE CONTROLLER
+      </Text>
 
-        <View style={styles.joystickOuter}>
-          <Animated.View
-            style={[styles.joystickInner, { transform: [{ translateX: pan.x }, { translateY: pan.y }] }]}
-            {...panResponder.panHandlers}
-          />
-        </View>
+      <View style={styles.joystickOuter}>
+        <Animated.View
+          style={[
+            styles.joystickInner,
+            { transform: [{ translateX: pan.x }, { translateY: pan.y }] },
+          ]}
+          {...panResponder.panHandlers}
+        />
+      </View>
 
-        <Text style={styles.instructions}>Move the joystick to control the plane</Text>
-      </LinearGradient>
-    </ImageBackground>
+      <Text style={styles.instructions}>
+        Move the joystick to control the plane
+      </Text>
+    </LinearGradient>
   );
 }
 
 const styles = StyleSheet.create({
-  background: { flex: 1, width, height },
-  container: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20 },
+  container: {
+    flex: 1,
+    width,
+    height,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
   title: {
     fontSize: 32,
     color: '#fff',
@@ -108,11 +108,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#ffffff30',
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.4,
-    shadowRadius: 8,
-    elevation: 10,
     marginBottom: 30,
   },
   joystickInner: {
@@ -120,13 +115,10 @@ const styles = StyleSheet.create({
     height: 80,
     borderRadius: 40,
     backgroundColor: '#38bdf8',
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.5,
-    shadowRadius: 6,
-    elevation: 8,
   },
-  instructions: { color: '#e0e0e0', fontSize: 16, textAlign: 'center' },
+  instructions: {
+    color: '#e0e0e0',
+    fontSize: 16,
+    textAlign: 'center',
+  },
 });
