@@ -14,6 +14,8 @@ jobs:
       # 1️⃣ Checkout the repository
       - name: Checkout repository
         uses: actions/checkout@v3
+        with:
+          submodules: true  # include submodules if any
 
       # 2️⃣ Setup Node.js environment
       - name: Setup Node.js
@@ -33,20 +35,31 @@ jobs:
       # 4️⃣ Install npm dependencies
       - name: Install dependencies
         working-directory: plane-controller-app
-        run: npm install
+        run: npm ci  # safer than npm install in CI
 
       # 5️⃣ Install EAS CLI globally
       - name: Install EAS CLI
         run: npm install -g eas-cli
 
-      # 6️⃣ Run tests (optional)
+      # 6️⃣ Clear cache & start Metro bundler (fix asset issues)
+      - name: Clear Metro & npm cache
+        working-directory: plane-controller-app
+        run: |
+          npm cache clean --force
+          rm -rf node_modules
+          rm -rf .expo
+          npm ci
+
+      # 7️⃣ Optional: Run tests
       - name: Run tests
         working-directory: plane-controller-app
         run: npm test || echo "No tests found"
 
-      # 7️⃣ Publish update via EAS Update
+      # 8️⃣ Publish update via EAS Update
       - name: EAS Update
         working-directory: plane-controller-app
-        run: eas update --branch main --message "CI/CD update from GitHub Actions"
+        run: |
+          # Tell CI mode to avoid prompts
+          CI=1 eas update --branch main --message "CI/CD update from GitHub Actions"
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
