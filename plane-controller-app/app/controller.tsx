@@ -4,11 +4,13 @@ import { LinearGradient } from 'expo-linear-gradient';
 import React, { useEffect, useRef, useState } from 'react';
 import { Animated, Dimensions, ImageBackground, PanResponder, StyleSheet, Text, View } from 'react-native';
 
-// Assets imports
-import airplaneImg from '../assets/images/airplane.png';
+// Font import
 import KTFRoadbrushFont from '../assets/fonts/KTF-Roadbrush.ttf';
 
 const { width, height } = Dimensions.get('window');
+
+// Use require() instead of import for images
+const airplaneImg = require('../assets/images/airplane.png');
 
 function usePreloadImages(images: number[]) {
   const [loaded, setLoaded] = useState(false);
