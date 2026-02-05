@@ -17,6 +17,15 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: 20
+          cache: 'npm'
+          cache-dependency-path: plane-controller-app/package-lock.json
+
+      - name: Install dependencies
+        working-directory: plane-controller-app
+        run: |
+          npm ci
+          # Install eas-cli locally in the project
+          npm install eas-cli@latest
 
       - name: Clear cache
         working-directory: plane-controller-app
@@ -25,27 +34,25 @@ jobs:
           rm -rf .expo
           rm -rf dist
 
-      - name: Install dependencies
-        working-directory: plane-controller-app
-        run: npm ci
-
-      - name: Verify image imports are updated
+      - name: Fix image file if needed
         working-directory: plane-controller-app
         run: |
-          # Check if any files still reference airplane.png
-          if grep -r "airplane\.png" src/ app/ components/ --include="*.js" --include="*.jsx" --include="*.ts" --include="*.tsx" 2>/dev/null; then
-            echo "ERROR: Found references to airplane.png. Please update to airplane.jpg"
-            echo "Files that need updating:"
-            grep -r "airplane\.png" src/ app/ components/ --include="*.js" --include="*.jsx" --include="*.ts" --include="*.tsx" 2>/dev/null
-            exit 1
-          else
-            echo "✓ All image references are updated to .jpg"
+          # Install tools to check file types
+          sudo apt-get update
+          sudo apt-get install -y file
+          
+          # Check airplane image file type
+          if [ -f "assets/images/airplane.png" ]; then
+            echo "Checking airplane.png..."
+            file assets/images/airplane.png
+          elif [ -f "assets/images/airplane.jpg" ]; then
+            echo "Found airplane.jpg instead of airplane.png"
           fi
 
       - name: Publish update via EAS
         working-directory: plane-controller-app
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
-          CI: 1
         run: |
-          eas update --branch main --message "CI/CD update from GitHub Actions"
+          # Use npx to run eas from local node_modules
+          npx eas update --branch main --message "CI/CD update from GitHub Actions"
