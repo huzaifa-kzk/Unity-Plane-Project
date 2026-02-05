@@ -1,37 +1,41 @@
-name: Expo CI/CD
+name: Expo Publish CI/CD
 
 on:
   push:
     branches:
-      - main
+      - main  # or your default branch
 
 jobs:
-  update:
+  publish:
     runs-on: ubuntu-latest
 
     steps:
-      # Checkout repo
-      - name: Checkout repository
+      # 1️⃣ Checkout the repo
+      - name: Checkout code
         uses: actions/checkout@v3
 
-      # Setup Node
+      # 2️⃣ Setup Node.js
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
           node-version: 20
 
-      # Install dependencies
+      # 3️⃣ Install dependencies
       - name: Install dependencies
-        working-directory: plane-controller-app
         run: npm install
+        working-directory: plane-controller-app
 
-      # Install EAS CLI
-      - name: Install EAS CLI
-        run: npm install -g eas-cli
+      # 4️⃣ Install Expo CLI globally
+      - name: Install Expo CLI
+        run: npm install -g expo-cli
 
-      # Publish OTA update
-      - name: EAS Update
+      # 5️⃣ Login to Expo (using secret EXPO_TOKEN)
+      - name: Login to Expo
+        run: expo login --non-interactive --token ${{ secrets.EXPO_TOKEN }}
+
+      # 6️⃣ Publish OTA update
+      - name: Publish Expo update
+        run: expo publish --non-interactive
         working-directory: plane-controller-app
         env:
-          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
-        run: eas update --branch main --auto
+          CI: 1

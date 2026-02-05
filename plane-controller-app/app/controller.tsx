@@ -100,7 +100,7 @@ export default function ControllerScreen() {
 }
 
 const styles = StyleSheet.create({
-  background: { flex: 1, width, height },
+  background: { flex: 1, width, height: height * 1.1 ,marginTop: -65 },
   container: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20 },
   title: {
     fontSize: 32,
