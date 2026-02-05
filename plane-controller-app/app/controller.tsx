@@ -10,7 +10,7 @@ import KTFRoadbrushFont from '../assets/fonts/KTF-Roadbrush.ttf';
 const { width, height } = Dimensions.get('window');
 
 // Use require() instead of import for images
-const airplaneImg = require('../assets/images/airplane.png');
+const airplaneImg = require('../assets/images/airplane.jpg');
 
 function usePreloadImages(images: number[]) {
   const [loaded, setLoaded] = useState(false);
