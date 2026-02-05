@@ -3,39 +3,29 @@ name: Expo Publish CI/CD
 on:
   push:
     branches:
-      - main  # or your default branch
+      - main
 
 jobs:
   publish:
     runs-on: ubuntu-latest
 
     steps:
-      # 1️⃣ Checkout the repo
       - name: Checkout code
         uses: actions/checkout@v3
 
-      # 2️⃣ Setup Node.js
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
           node-version: 20
 
-      # 3️⃣ Install dependencies
       - name: Install dependencies
         run: npm install
         working-directory: plane-controller-app
 
-      # 4️⃣ Install Expo CLI globally
-      - name: Install Expo CLI
-        run: npm install -g expo-cli
-
-      # 5️⃣ Login to Expo (using secret EXPO_TOKEN)
-      - name: Login to Expo
-        run: expo login --non-interactive --token ${{ secrets.EXPO_TOKEN }}
-
-      # 6️⃣ Publish OTA update
+      # Use the local Expo CLI via npx (no global install needed)
       - name: Publish Expo update
-        run: expo publish --non-interactive
+        run: npx expo publish --non-interactive
         working-directory: plane-controller-app
         env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
           CI: 1
