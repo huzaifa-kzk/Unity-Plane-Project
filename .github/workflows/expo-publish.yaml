@@ -17,147 +17,84 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: 20
+          cache: 'npm'
+          cache-dependency-path: plane-controller-app/package-lock.json
 
-      - name: Install ImageMagick for image processing
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y imagemagick
-
-      - name: Find and fix corrupt images
+      - name: Clean install dependencies
         working-directory: plane-controller-app
         run: |
-          echo "🔍 Looking for corrupt image files..."
+          # Clean everything
+          rm -rf node_modules package-lock.json
           
-          # Method 1: Find empty files
-          echo "Checking for empty image files:"
-          find . -type f \( -name "*.png" -o -name "*.jpg" -o -name "*.jpeg" -o -name "*.gif" -o -name "*.webp" -o -name "*.bmp" \) -size 0 | while read img; do
-            echo "❌ Found empty file: $img"
-            # Replace with a tiny valid PNG
-            convert -size 1x1 xc:transparent "$img" || rm "$img"
-          done
+          # Install with specific expo version
+          npm install
           
-          # Method 2: Check files that ImageMagick can't read
-          echo "Checking for unreadable images:"
-          find . -type f \( -name "*.png" -o -name "*.jpg" -o -name "*.jpeg" \) | while read img; do
-            if ! identify "$img" 2>/dev/null; then
-              echo "❌ ImageMagick cannot read: $img"
-              echo "Attempting to fix..."
-              # Try to convert to valid format
-              convert -size 1x1 xc:transparent "${img%.*}-fixed.png" 2>/dev/null && mv "${img%.*}-fixed.png" "$img" || echo "Failed to fix $img"
-            fi
-          done
+          # Install eas-cli globally for this workflow
+          npm install -g eas-cli@latest
           
-          # Method 3: Check specific assets folder thoroughly
-          echo "Thorough check of assets folder:"
+          # Also install locally
+          npm install eas-cli@latest --save-dev
+          
+          # Verify installation
+          echo "Checking eas installation:"
+          which eas || echo "eas not in PATH"
+          npx eas --version || echo "npx eas failed"
+          ls -la node_modules/.bin/eas 2>/dev/null || echo "No local eas binary"
+
+      - name: Check and fix image files
+        working-directory: plane-controller-app
+        run: |
+          # Install imagemagick to check images
+          sudo apt-get update
+          sudo apt-get install -y file imagemagick
+          
+          echo "Checking image files..."
+          
+          # Check for empty or corrupt images in assets
           if [ -d "assets" ]; then
             find assets -type f \( -name "*.png" -o -name "*.jpg" -o -name "*.jpeg" \) | while read img; do
               echo "Checking: $img"
-              # Verify file is readable
+              
+              # Check if file is empty
               if [ ! -s "$img" ]; then
-                echo "  ⚠️  Empty or missing, replacing..."
-                convert -size 10x10 xc:#cccccc "${img}" 2>/dev/null || true
+                echo "  ⚠️  Empty file, creating placeholder..."
+                convert -size 10x10 xc:#cccccc "$img" 2>/dev/null || true
+              fi
+              
+              # Check if imagemagick can read it
+              if ! identify "$img" 2>/dev/null; then
+                echo "  ⚠️  Corrupt image, replacing..."
+                convert -size 10x10 xc:#cccccc "$img" 2>/dev/null || true
               fi
             done
           fi
 
-      - name: Run image validation script
-        working-directory: plane-controller-app
-        run: |
-          # Create and run validation script
-          cat > validate-images.js << 'EOF'
-          const fs = require('fs');
-          const path = require('path');
-          
-          console.log('Validating images...');
-          
-          function checkDir(dir) {
-            const files = fs.readdirSync(dir, { withFileTypes: true });
-            files.forEach(file => {
-              const fullPath = path.join(dir, file.name);
-              if (file.isDirectory()) {
-                checkDir(fullPath);
-              } else if (/\.(png|jpg|jpeg|gif|webp|bmp)$/i.test(file.name)) {
-                try {
-                  const stats = fs.statSync(fullPath);
-                  const buffer = fs.readFileSync(fullPath);
-                  if (stats.size === 0 || buffer.length === 0) {
-                    console.log(`BAD: ${fullPath} - size: ${stats.size}, buffer: ${buffer.length}`);
-                    // Create minimal valid PNG
-                    const pngHeader = Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]);
-                    fs.writeFileSync(fullPath, pngHeader);
-                  }
-                } catch (err) {
-                  console.log(`ERROR: ${fullPath} - ${err.message}`);
-                }
-              }
-            });
-          }
-          
-          checkDir('.');
-          console.log('Validation complete.');
-          EOF
-          
-          node validate-images.js
-
-      - name: Install dependencies
-        working-directory: plane-controller-app
-        run: |
-          # Clean install to avoid cache issues
-          npm ci
-          
-          # Update problematic packages
-          npm install jimp@latest --save || true
-          npm install sharp@latest --save || true
-
-      - name: Clear all caches
+      - name: Clear cache
         working-directory: plane-controller-app
         run: |
           rm -rf node_modules/.cache
           rm -rf .expo
           rm -rf dist
           rm -rf .metro
-          
-          # Clear npm cache
-          npm cache clean --force
 
-      - name: Create metro config to skip problematic images
-        working-directory: plane-controller-app
-        run: |
-          cat > metro.config.js << 'EOF'
-          const { getDefaultConfig } = require('expo/metro-config');
-          const path = require('path');
-          
-          const config = getDefaultConfig(__dirname);
-          
-          // Skip problematic assets during bundling
-          config.resolver.assetExts = config.resolver.assetExts.filter(
-            ext => !['ttf', 'otf'].includes(ext)
-          );
-          
-          // Add custom transformer to handle problematic images
-          config.transformer.minifierConfig.compress.drop_console = false;
-          
-          module.exports = config;
-          EOF
-          
-          echo "Created metro.config.js"
-
-      - name: Test export locally first
-        working-directory: plane-controller-app
-        run: |
-          # Try a simple export to see if it works
-          npx expo export --output-dir test-export --platform web 2>&1 | head -50 || true
-
-      - name: Run EAS Update
+      - name: Run EAS Update (Direct approach)
         working-directory: plane-controller-app
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
           CI: true
-          EXPO_IMAGE_UTILS_NO_SHARP: "1"  # Disable sharp
-          EXPO_NO_TYPESCRIPT: "1"         # Disable TypeScript if not needed
         run: |
-          # Run with timeout and retry
-          timeout 300 ./node_modules/.bin/eas update --branch main --message "CI/CD update from GitHub Actions" || echo "First attempt failed, retrying..."
-          
-          # Retry with simpler config
-          EXPO_IMAGE_UTILS_NO_SHARP=1 CI=1 ./node_modules/.bin/eas update --branch main --message "CI/CD update retry" --non-interactive
+          # Method 1: Use eas command directly (global install)
+          eas update --branch main --message "CI/CD update from GitHub Actions" || {
+            echo "Method 1 failed, trying Method 2..."
+            
+            # Method 2: Use expo eas command
+            npx expo eas update --branch main --message "CI/CD update from GitHub Actions" || {
+              echo "Method 2 failed, trying Method 3..."
+              
+              # Method 3: Use npx with eas
+              npx eas update --branch main --message "CI/CD update from GitHub Actions" || {
+                echo "All methods failed"
+                exit 1
+              }
+            }
+          }
