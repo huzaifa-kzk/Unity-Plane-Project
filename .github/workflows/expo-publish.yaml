@@ -1,4 +1,4 @@
-name: Expo Publish CI/CD
+name: Expo EAS Update CI/CD
 
 on:
   push:
@@ -6,11 +6,11 @@ on:
       - main
 
 jobs:
-  publish:
+  eas-update:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
+      - name: Checkout repo
         uses: actions/checkout@v3
 
       - name: Setup Node.js
@@ -22,10 +22,12 @@ jobs:
         run: npm install
         working-directory: plane-controller-app
 
-      # Use the local Expo CLI via npx (no global install needed)
-      - name: Publish Expo update
-        run: npx expo publish --non-interactive
+      - name: Install EAS CLI
+        run: npm install -g eas-cli
+
+      - name: Publish update via EAS
         working-directory: plane-controller-app
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
           CI: 1
+        run: eas update --branch main --message "CI/CD update from GitHub Actions"
