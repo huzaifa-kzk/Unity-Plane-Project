@@ -41,3 +41,4 @@ unity-plane/Assets/
 .DS_Store
 .vscode/
 !plane-controller-app/assets/
+unity-plane/Recordings/
