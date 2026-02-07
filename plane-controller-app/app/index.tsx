@@ -9,7 +9,7 @@ export default function HomeScreen() {
 
       {/* Subtitle */}
       <Text style={styles.subtitle}>
-       hello rayyan
+        Control your Unity Plane from your phone
       </Text>
 
       {/* Start Button */}

@@ -36,7 +36,7 @@ export default function ControllerScreen() {
   const ws = useRef<WebSocket | null>(null);
 
   const connectWebSocket = () => {
-    ws.current = new WebSocket('server IP');
+    ws.current = new WebSocket('ws://184.73.76.128:8080');
 
     ws.current.onopen = () => console.log('✅ Connected to WebSocket server');
     ws.current.onmessage = (msg) => console.log('⬅️ Server says:', msg.data);
