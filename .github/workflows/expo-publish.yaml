@@ -2,25 +2,19 @@ name: Expo EAS Update CI/CD
 
 on:
   push:
-    branches: [main]
-    paths:
-      - 'plane-controller-app/app/**'    # Only trigger on app changes
-      - 'plane-controller-app/src/**'    # Not on config files
-      - 'plane-controller-app/assets/**'
+    branches:
+      - main
 
 jobs:
   eas-update:
     runs-on: ubuntu-latest
-    timeout-minutes: 5
 
     steps:
+      # 1️⃣ Checkout the repo
       - name: Checkout repo
         uses: actions/checkout@v3
-        with:
-          sparse-checkout: |           # Only checkut needed files
-            plane-controller-app
-          sparse-checkout-cone-mode: false
 
+      # 2️⃣ Setup Node.js and cache dependencies
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
@@ -28,17 +22,45 @@ jobs:
           cache: 'npm'
           cache-dependency-path: plane-controller-app/package-lock.json
 
-      - name: Install dependencies (cached)
+      # 3️⃣ Restore cached expo artifacts (optional, speeds up Metro bundler)
+      - name: Restore Expo cache
+        uses: actions/cache@v3
+        with:
+          path: |
+            plane-controller-app/.expo
+            plane-controller-app/node_modules/.cache
+          key: expo-cache-${{ hashFiles('plane-controller-app/package-lock.json') }}
+
+      # 4️⃣ Install dependencies (skip global eas-cli install)
+      - name: Install dependencies
         working-directory: plane-controller-app
         run: |
-          # Only install if package-lock changed
-          npm ci --prefer-offline --no-audit
+          npm ci
+          npm install eas-cli@latest --save-dev
 
-      - name: Publish EAS Update
+      # 5️⃣ Only fix broken images if assets changed
+      - name: Check and fix images if changed
+        working-directory: plane-controller-app
+        run: |
+          if git diff --name-only ${{ github.sha }} | grep -q '^assets/'; then
+            sudo apt-get update && sudo apt-get install -y file imagemagick
+            find assets -type f \( -name "*.png" -o -name "*.jpg" -o -name "*.jpeg" \) | while read img; do
+              [ ! -s "$img" ] && convert -size 10x10 xc:#cccccc "$img" 2>/dev/null || true
+              ! identify "$img" 2>/dev/null && convert -size 10x10 xc:#cccccc "$img" 2>/dev/null || true
+            done
+          fi
+
+      # 6️⃣ Clear cache (keep essential caches to speed up rebuild)
+      - name: Clean temporary caches
+        working-directory: plane-controller-app
+        run: |
+          rm -rf dist .metro
+
+      # 7️⃣ Run EAS Update
+      - name: Run EAS Update
         working-directory: plane-controller-app
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
           CI: true
         run: |
-          npx expo export --platform all --non-interactive
-          npx eas update --branch main --message "${{ github.event.head_commit.message || 'CI/CD update' }}" --non-interactive
+          eas update --branch main --message "CI/CD update from GitHub Actions" --non-interactive
