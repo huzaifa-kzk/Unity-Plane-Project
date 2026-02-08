@@ -23,47 +23,24 @@ jobs:
       - name: Clean install dependencies
         working-directory: plane-controller-app
         run: |
-          # Clean everything
           rm -rf node_modules package-lock.json
-          
-          # Install with specific expo version
           npm install
-          
-          # Install eas-cli globally for this workflow
           npm install -g eas-cli@latest
-          
-          # Also install locally
           npm install eas-cli@latest --save-dev
-          
-          # Verify installation
-          echo "Checking eas installation:"
-          which eas || echo "eas not in PATH"
-          npx eas --version || echo "npx eas failed"
-          ls -la node_modules/.bin/eas 2>/dev/null || echo "No local eas binary"
 
       - name: Check and fix image files
         working-directory: plane-controller-app
         run: |
-          # Install imagemagick to check images
           sudo apt-get update
           sudo apt-get install -y file imagemagick
-          
-          echo "Checking image files..."
-          
-          # Check for empty or corrupt images in assets
+
           if [ -d "assets" ]; then
             find assets -type f \( -name "*.png" -o -name "*.jpg" -o -name "*.jpeg" \) | while read img; do
-              echo "Checking: $img"
-              
-              # Check if file is empty
               if [ ! -s "$img" ]; then
-                echo "  ⚠️  Empty file, creating placeholder..."
                 convert -size 10x10 xc:#cccccc "$img" 2>/dev/null || true
               fi
-              
-              # Check if imagemagick can read it
+
               if ! identify "$img" 2>/dev/null; then
-                echo "  ⚠️  Corrupt image, replacing..."
                 convert -size 10x10 xc:#cccccc "$img" 2>/dev/null || true
               fi
             done
@@ -77,24 +54,28 @@ jobs:
           rm -rf dist
           rm -rf .metro
 
-      - name: Run EAS Update (Direct approach)
+      - name: Run EAS Update
         working-directory: plane-controller-app
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
           CI: true
         run: |
-          # Method 1: Use eas command directly (global install)
-          eas update --branch main --message "CI/CD update from GitHub Actions" || {
-            echo "Method 1 failed, trying Method 2..."
-            
-            # Method 2: Use expo eas command
-            npx expo eas update --branch main --message "CI/CD update from GitHub Actions" || {
-              echo "Method 2 failed, trying Method 3..."
-              
-              # Method 3: Use npx with eas
-              npx eas update --branch main --message "CI/CD update from GitHub Actions" || {
-                echo "All methods failed"
-                exit 1
-              }
-            }
-          }
+          eas update --branch main --message "CI/CD update from GitHub Actions"
+
+  websocket-test:
+    runs-on: ubuntu-latest
+    needs: eas-update
+
+    steps:
+      - name: Setup Node
+        uses: actions/setup-node@v3
+        with:
+          node-version: 20
+
+      - name: Install WebSocket tester
+        run: npm install -g wscat
+
+      - name: Test EC2 WebSocket Connection
+        run: |
+          echo "Testing WebSocket connectivity..."
+          timeout 15 wscat -c ws://YOUR_EC2_PUBLIC_IP:8080 || exit 1
