@@ -17,7 +17,7 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v3
         with:
-          sparse-checkout: |           # Only checkout needed files
+          sparse-checkout: |           # Only checkut needed files
             plane-controller-app
           sparse-checkout-cone-mode: false
 
