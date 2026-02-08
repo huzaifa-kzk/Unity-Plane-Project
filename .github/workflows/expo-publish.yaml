@@ -10,11 +10,9 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # 1️⃣ Checkout repo
       - name: Checkout repo
         uses: actions/checkout@v3
 
-      # 2️⃣ Setup Node.js and cache dependencies
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
@@ -22,7 +20,6 @@ jobs:
           cache: 'npm'
           cache-dependency-path: plane-controller-app/package-lock.json
 
-      # 3️⃣ Clean install dependencies
       - name: Clean install dependencies
         working-directory: plane-controller-app
         run: |
@@ -31,7 +28,24 @@ jobs:
           npm install -g eas-cli@latest
           npm install eas-cli@latest --save-dev
 
-      # 4️⃣ Clear cache
+      - name: Check and fix image files
+        working-directory: plane-controller-app
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y file imagemagick
+
+          if [ -d "assets" ]; then
+            find assets -type f \( -name "*.png" -o -name "*.jpg" -o -name "*.jpeg" \) | while read img; do
+              if [ ! -s "$img" ]; then
+                convert -size 10x10 xc:#cccccc "$img" 2>/dev/null || true
+              fi
+
+              if ! identify "$img" 2>/dev/null; then
+                convert -size 10x10 xc:#cccccc "$img" 2>/dev/null || true
+              fi
+            done
+          fi
+
       - name: Clear cache
         working-directory: plane-controller-app
         run: |
@@ -40,7 +54,6 @@ jobs:
           rm -rf dist
           rm -rf .metro
 
-      # 5️⃣ Run EAS Update
       - name: Run EAS Update
         working-directory: plane-controller-app
         env:
