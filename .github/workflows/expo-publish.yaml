@@ -78,7 +78,7 @@ jobs:
       - name: Test EC2 WebSocket Connection
         run: |
           echo "Testing WebSocket connectivity..."
-          wscat -c ws://52.91.254.29:8080 -t 10 || { 
+          wscat -c ws://52.91.254.29:8080 -t || { 
             echo "❌ WebSocket connection failed"; 
             exit 1; 
           }
