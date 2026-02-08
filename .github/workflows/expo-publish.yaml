@@ -2,16 +2,24 @@ name: Expo EAS Update CI/CD
 
 on:
   push:
-    branches:
-      - main
+    branches: [main]
+    paths:
+      - 'plane-controller-app/app/**'    # Only trigger on app changes
+      - 'plane-controller-app/src/**'    # Not on config files
+      - 'plane-controller-app/assets/**'
 
 jobs:
   eas-update:
     runs-on: ubuntu-latest
+    timeout-minutes: 5
 
     steps:
       - name: Checkout repo
         uses: actions/checkout@v3
+        with:
+          sparse-checkout: |           # Only checkout needed files
+            plane-controller-app
+          sparse-checkout-cone-mode: false
 
       - name: Setup Node.js
         uses: actions/setup-node@v3
@@ -20,44 +28,17 @@ jobs:
           cache: 'npm'
           cache-dependency-path: plane-controller-app/package-lock.json
 
-      - name: Clean install dependencies
+      - name: Install dependencies (cached)
         working-directory: plane-controller-app
         run: |
-          rm -rf node_modules package-lock.json
-          npm install
-          npm install -g eas-cli@latest
-          npm install eas-cli@latest --save-dev
+          # Only install if package-lock changed
+          npm ci --prefer-offline --no-audit
 
-      - name: Check and fix image files
-        working-directory: plane-controller-app
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y file imagemagick
-
-          if [ -d "assets" ]; then
-            find assets -type f \( -name "*.png" -o -name "*.jpg" -o -name "*.jpeg" \) | while read img; do
-              if [ ! -s "$img" ]; then
-                convert -size 10x10 xc:#cccccc "$img" 2>/dev/null || true
-              fi
-
-              if ! identify "$img" 2>/dev/null; then
-                convert -size 10x10 xc:#cccccc "$img" 2>/dev/null || true
-              fi
-            done
-          fi
-
-      - name: Clear cache
-        working-directory: plane-controller-app
-        run: |
-          rm -rf node_modules/.cache
-          rm -rf .expo
-          rm -rf dist
-          rm -rf .metro
-
-      - name: Run EAS Update
+      - name: Publish EAS Update
         working-directory: plane-controller-app
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
           CI: true
         run: |
-          eas update --branch main --message "CI/CD update from GitHub Actions"
+          npx expo export --platform all --non-interactive
+          npx eas update --branch main --message "${{ github.event.head_commit.message || 'CI/CD update' }}" --non-interactive
