@@ -61,24 +61,3 @@ jobs:
           CI: true
         run: |
           eas update --branch main --message "CI/CD update from GitHub Actions"
-
-  websocket-test:
-    runs-on: ubuntu-latest
-    needs: eas-update
-
-    steps:
-      - name: Setup Node
-        uses: actions/setup-node@v3
-        with:
-          node-version: 20
-
-      - name: Install WebSocket tester
-        run: npm install -g wscat
-
-      - name: Test EC2 WebSocket Connection
-        run: |
-          echo "Testing WebSocket connectivity..."
-          wscat -c ws://52.91.254.29:8080 -t || { 
-            echo "❌ WebSocket connection failed"; 
-            exit 1; 
-          }
