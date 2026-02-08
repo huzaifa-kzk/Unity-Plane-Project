@@ -78,4 +78,7 @@ jobs:
       - name: Test EC2 WebSocket Connection
         run: |
           echo "Testing WebSocket connectivity..."
-          timeout 15 wscat -c ws://YOUR_EC2_PUBLIC_IP:8080 || exit 1
+          wscat -c ws://52.91.201.35:8080 -t 10 || { 
+            echo "❌ WebSocket connection failed"; 
+            exit 1; 
+          }
