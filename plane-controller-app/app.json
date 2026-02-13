@@ -58,6 +58,12 @@
         "projectId": "a3bf00f4-2abd-46d4-849e-526ec3f4d087"
       }
     },
-    "owner": "huzaifa.kzk"
+    "owner": "huzaifa.kzk",
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/a3bf00f4-2abd-46d4-849e-526ec3f4d087"
+    }
   }
 }

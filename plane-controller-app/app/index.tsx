@@ -5,7 +5,7 @@ export default function HomeScreen() {
   return (
     <View style={styles.container}>
       {/* Title */}
-      <Text style={styles.title}>Welcome to Controller</Text>
+      <Text style={styles.title}>Welcome rayyan the ugly</Text>
 
       {/* Subtitle */}
       <Text style={styles.subtitle}>
