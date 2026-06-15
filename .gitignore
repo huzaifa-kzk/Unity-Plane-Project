@@ -4,6 +4,9 @@
 node_modules/
 npm-debug.log
 .expo/
+.env
+.env.*
+!.env.example
 dist/
 build/
 *.expo.js
@@ -21,18 +24,14 @@ Builds/
 Logs/
 UserSettings/
 
-# Large asset folders
-unity-plane/Assets/
-
-
+# Keep Unity source, scenes, prefabs, and metadata in git.
+# Put private/licensed assets in this folder as a private git submodule,
+# private repo checkout, or Git LFS-backed asset pack.
+unity-plane/Assets/PrivateAssets/
 
 # --------------------
-# Terraform
+# Local secrets / keys
 # --------------------
-*.tfstate
-*.tfstate.backup
-.terraform/
-.terraform.lock.hcl
 *.pem  
 
 # --------------------

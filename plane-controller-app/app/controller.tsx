@@ -3,14 +3,13 @@ import { useFonts } from 'expo-font';
 import { LinearGradient } from 'expo-linear-gradient';
 import React, { useEffect, useRef, useState } from 'react';
 import { Animated, Dimensions, ImageBackground, PanResponder, StyleSheet, Text, View } from 'react-native';
+import { WEBSOCKET_URL } from '../constants/config';
 
-// Font import
 import KTFRoadbrushFont from '../assets/fonts/KTF-Roadbrush.ttf';
 
 const { width, height } = Dimensions.get('window');
-
-// Use require() instead of import for images
 const airplaneImg = require('../assets/images/airplane.jpg');
+const preloadedImages = [airplaneImg];
 
 function usePreloadImages(images: number[]) {
   const [loaded, setLoaded] = useState(false);
@@ -21,7 +20,7 @@ function usePreloadImages(images: number[]) {
       setLoaded(true);
     }
     load();
-  }, []);
+  }, [images]);
 
   return loaded;
 }
@@ -31,25 +30,38 @@ export default function ControllerScreen() {
     KTFRoadbrush: KTFRoadbrushFont,
   });
 
-  const imagesLoaded = usePreloadImages([airplaneImg]);
+  const imagesLoaded = usePreloadImages(preloadedImages);
   const pan = useRef(new Animated.ValueXY()).current;
   const ws = useRef<WebSocket | null>(null);
-
-  const connectWebSocket = () => {
-    ws.current = new WebSocket('ws://52.91.254.29:8080');
-
-    ws.current.onopen = () => console.log('✅ Connected to WebSocket server');
-    ws.current.onmessage = (msg) => console.log('⬅️ Server says:', msg.data);
-    ws.current.onerror = (e) => console.log('⚠️ WebSocket error', e);
-    ws.current.onclose = () => {
-      console.log('❌ WebSocket closed, reconnecting in 2s...');
-      setTimeout(connectWebSocket, 2000);
-    };
-  };
+  const reconnectTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const shouldReconnect = useRef(true);
 
   useEffect(() => {
+    function connectWebSocket() {
+      ws.current = new WebSocket(WEBSOCKET_URL);
+
+      ws.current.onopen = () => console.log('Connected to WebSocket server');
+      ws.current.onmessage = (msg) => console.log('Server says:', msg.data);
+      ws.current.onerror = (e) => console.log('WebSocket error', e);
+      ws.current.onclose = () => {
+        if (!shouldReconnect.current) {
+          return;
+        }
+
+        console.log('WebSocket closed, reconnecting in 2s...');
+        reconnectTimeout.current = setTimeout(connectWebSocket, 2000);
+      };
+    }
+
     connectWebSocket();
-    return () => ws.current?.close();
+
+    return () => {
+      shouldReconnect.current = false;
+      if (reconnectTimeout.current) {
+        clearTimeout(reconnectTimeout.current);
+      }
+      ws.current?.close();
+    };
   }, []);
 
   const panResponder = useRef(
@@ -61,7 +73,7 @@ export default function ControllerScreen() {
 
         if (ws.current && ws.current.readyState === WebSocket.OPEN) {
           ws.current.send(JSON.stringify({ dx: gestureState.dx, dy: gestureState.dy }));
-          console.log('➡️ Sent:', { dx: gestureState.dx, dy: gestureState.dy });
+          console.log('Sent:', { dx: gestureState.dx, dy: gestureState.dy });
         }
       },
       onPanResponderRelease: () => {
@@ -100,7 +112,7 @@ export default function ControllerScreen() {
 }
 
 const styles = StyleSheet.create({
-  background: { flex: 1, width, height: height * 1.1 ,marginTop: -65 },
+  background: { flex: 1, width, height: height * 1.1, marginTop: -65 },
   container: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20 },
   title: {
     fontSize: 32,

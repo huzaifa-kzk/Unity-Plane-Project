@@ -1,67 +1,79 @@
 # Unity Remote Controller App
 
-A learning project that connects a mobile **React Native** app with a **Unity plane simulator**, enabling real-time plane control using WebSocket communication.  
+A learning project that connects a mobile **React Native** app with a **Unity plane simulator**, enabling real-time plane control using WebSocket communication.
 
 ## Features
 
-- **Real-time control:** Mobile app sends commands to a Unity simulator over WebSocket.  
-- **React Native app:** Cross-platform mobile app built with **Expo**.  
-- **Unity integration:** Plane simulator built in **Unity** receives inputs from the mobile controller.  
-- **Customizable UI:** Mobile app displays controller interface and real-time feedback.  
+- **Real-time control:** Mobile app sends joystick commands to a Unity simulator over WebSocket.
+- **React Native app:** Cross-platform mobile controller built with **Expo**.
+- **Unity integration:** Plane simulator receives controller input from the WebSocket relay.
+- **Containerized backend:** Node.js WebSocket server can run locally or in Docker.
 
-## DevOps & Cloud Aspects
+## Project Structure
 
-- **Infrastructure as Code (IaC):** AWS resources provisioned using **Terraform** for reproducible and version-controlled infrastructure.  
-- **Containerized Backend:** Node.js WebSocket server runs in a **Docker container** for consistent deployment.  
-- **Cloud Deployment:** Backend hosted on **AWS EC2**, managing real-time connections from mobile clients.  
+- `plane-controller-app/` - Expo React Native controller app.
+- `unity-websocket-server/` - Node.js WebSocket relay server.
+- `unity-plane/` - Unity simulator project.
 
-# Unity Plane Controller - EC2 WebSocket Server Setup
+## Configure the Controller App
 
-This guide will help a new developer spin up the EC2 WebSocket server for the Unity Plane Controller project.
-
----
-
-## Spin Up the EC2 Instance
-
-You can launch an EC2 instance either:
-
-- **Manually via AWS Console**  
-- **Automatically via Terraform** in the `awsinfra` folder:
+The controller does not hard-code a public server IP. Copy the example environment file and set your WebSocket URL:
 
 ```bash
-terraform init
-terraform apply
+cd plane-controller-app
+cp .env.example .env
 ```
-## SSH into the EC2
+
+Then edit `.env`:
+
 ```bash
-ssh -i <your-private-key>.pem ec2-user@<EC2_PUBLIC_IP>
+EXPO_PUBLIC_WEBSOCKET_URL=ws://YOUR_SERVER_IP:8080
 ```
-## Install Docker (if not pre-installed)
+
+For local testing, keep:
+
 ```bash
-sudo amazon-linux-extras install docker -y
-sudo service docker start
+EXPO_PUBLIC_WEBSOCKET_URL=ws://localhost:8080
 ```
-## Pull the Docker Image
-```bash
-docker pull huzaifakzk/unity-plane-project-joystick-server:latest
-```
+
 ## Run the WebSocket Server
-```bash
-docker run -d -p 8080:8080 huzaifakzk/unity-plane-project-joystick-server:latest
-```
-## Connect the Unity Client
-**6.1 Update WebSocket URL in Unity**
 
-*unity-plane/Scripts/Networking/WebSocketClient.cs*
 ```bash
-websocket = new WebSocket("ws://<PUBLIC_IP>:8080");
+cd unity-websocket-server
+npm install
+npm start
 ```
-Replace <PUBLIC_IP> with your EC2 public IP.
 
-*unity-plane/JoystickInput.cs*
+Or run it with Docker:
+
 ```bash
-websocket = new WebSocket("ws://<PUBLIC_IP>:8080");
+cd unity-websocket-server
+docker build -t unity-plane-websocket-server .
+docker run -p 8080:8080 unity-plane-websocket-server
 ```
-Replace <PUBLIC_IP> with your EC2 public IP.
 
-Our EC2 instance is now ready to serve the Unity Plane Controller via WebSocket.
+## Unity Assets
+
+Do not store private/licensed Unity assets in a public Google Drive link. Keep source scripts, scenes, prefabs, and `.meta` files in git so the Unity project is reproducible.
+
+For private or large assets, use one of these:
+
+- A private git repository added as a submodule under `unity-plane/Assets/PrivateAssets/`.
+- Git LFS for large binary assets such as `.fbx`, `.png`, `.jpg`, `.wav`, and `.unitypackage`.
+- A private release artifact or package registry if the assets should not live in the main repo.
+
+Example private submodule setup:
+
+```bash
+git submodule add <PRIVATE_ASSET_REPO_URL> unity-plane/Assets/PrivateAssets
+```
+
+## Connect Unity
+
+Set the same WebSocket URL in the Unity networking script:
+
+```bash
+ws://YOUR_SERVER_IP:8080
+```
+
+You can run the WebSocket server locally, on a VM, or in any container host.
