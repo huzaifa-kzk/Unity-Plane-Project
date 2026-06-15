@@ -54,13 +54,22 @@ docker run -p 8080:8080 unity-plane-websocket-server
 
 ## Unity Assets
 
-Do not store private/licensed Unity assets in a public Google Drive link. Keep source scripts, scenes, prefabs, and `.meta` files in git so the Unity project is reproducible.
+The Unity assets are required for the simulator. The public Google Drive asset folder is tracked in `unityassets`.
+
+Download the asset pack from that link and place the extracted files in:
+
+```bash
+unity-plane/Assets/PrivateAssets/
+```
+
+Keep source scripts, scenes, prefabs, and `.meta` files in git so the Unity project is reproducible.
 
 For private or large assets, use one of these:
 
 - A private git repository added as a submodule under `unity-plane/Assets/PrivateAssets/`.
 - Git LFS for large binary assets such as `.fbx`, `.png`, `.jpg`, `.wav`, and `.unitypackage`.
 - A private release artifact or package registry if the assets should not live in the main repo.
+- An untracked local `unityassets.local` file for private download/repo notes.
 
 Example private submodule setup:
 
